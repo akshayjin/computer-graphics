@@ -1,0 +1,43 @@
+Installation:
+	1) Install all the required libraries (QT and opengl).
+	2) Move to src directory (>>cd [path-to-src])
+	3) Compile (>>make all)
+	4) Run (>>./TextureMapping <path-to-ply-file-1> <path-to-ply-file-2>)
+
+User Interaction options:
+
+	ZOOM-IN/OUT  				----- GUI Slider
+	ROTATE   						----- Mouse Left key + drag
+	Translate						----- GUI Slider
+	Toggle Lights 			----- GUI checkbox
+	Toggle Bounding Box ----- GUI checkbox
+	Toggle Texture 			----- GUI checkbox
+	Change Texture 			----- GUI push button
+	Exit          			----- esc
+	
+
+Program Features:
+
+	1) Entire program is built using MVC architecture.
+	2) A graphical user interface is provided for easy user interaction using QT.
+	3) The program can handle any given .ply files and textures once files are named accordingly.
+
+References:
+
+	Angel, E.; Shreiner, D. (2012). Ch. 2,3 Interactive Computer Graphics -
+	A Top-Down Approach 6th ed. Pearson.
+	
+	OpenGL Windows GUI Application. (n.d.). Retrieved January 23, 2016,
+	from http://www.songho.ca/opengl/gl_mvc.html
+	
+	Lesson 10: Loading Stanford PLY 3D Models. (n.d.). Retrieved February 20, 2016,
+	from https://tutorialsplay.com/opengl/2014/09/17/lesson-10-loading-stanford-ply-3d-models/
+	
+	Open GL Super Bible. (n.d.). Retrieved April 08, 2016, 
+	from http://opengl.czweb.org/ch09/293-296.html
+	
+	Tutorial 5 : A Textured Cube. (n.d.). Retrieved April 08, 2016,
+	from http://www.opengl-tutorial.org/beginners-tutorials/tutorial-5-a-textured-cube/
+	
+	Qt 5 Tutorial. (n.d.). Retrieved April 08, 2016,
+	from http://www.bogotobogo.com/Qt/Qt5_OpenGL_QGLWidget.php

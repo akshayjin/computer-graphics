@@ -1,0 +1,883 @@
+/*
+ * 
+ * CS855: Data Visualization (Assignment 1)
+ * 		Salinity visualization of sea surface of Indian Ocean
+ * 
+ * Akshay Jindal
+ * IMT2012002
+ * akshay.jindal@iiitb.org
+ * 
+ * Note: Break Contours used for solving marching square ambiguity
+ * 
+ * 
+*/
+
+
+#include <GL/glut.h>												// GLUT library
+#include "include/Line.h"										// the Line class definition
+#include "include/Quad.h"										// the Quad class definition
+#include "include/Point3d.h"
+#include "include/DataHandler.h"	
+#include "include/camera.h"			
+#include <algorithm>
+#include <vector>
+#include <iostream>
+
+using namespace std;
+
+#define Number_of_Contours 5
+#define GRAYSCALE_COLORMAP 0
+#define RAINBOW_COLORMAP 1
+#define ENABLE 1
+#define DISABLE 0
+
+/*********************** Forward Declarations************************/
+
+void viewing(int W, int H);
+Point3d computeNormal(const Point3d& p,int salIndex);
+void colormap();
+void contours();
+void elevationMap();
+void legend();
+void drawWireframe();
+void draw();
+void KeyDown(unsigned char key, int x, int y);
+void specialKeys( int key, int x, int y ) ;
+void mouseFunc(int button, int state, int x, int y);
+void mouseDrag(int x, int y);
+
+float max_element(vector<float> arr,int size, bool ignore);
+float min_element(vector<float> arr,int size, bool ignore);
+void collectData(string fname);
+void rainbow(float value,float& R,float& G,float& B);
+void grayscale(float value,float& R,float& G,float& B);
+
+/********************************************************************/
+
+/*******Perspective projection parameters and Window Size************/
+
+float fov = 90;										
+float aspect = 1; 
+float z_near = .1; 
+float z_far  = 60;
+float scale_x = .5;
+float scale_y = 1;
+float scale_z = 1;		
+
+int screenWidth = 1280;
+int screenHeight = 768;
+
+CCamera Camera;	
+
+/*************************Input Handling********************************/
+
+bool mouseButtonPressed[5];
+
+/***********************Grid Formation Data*****************************/
+
+DataHandler dh;
+vector<float> xvalues;
+vector<float> yvalues;
+vector<float> salinityVals;
+vector<float> salParamVals;							//Normalized salinity values
+int XDim;
+int YDim;
+int timestep = 0;												// Current timestep
+int totalTimesteps;
+int maxElevationHeight = 0;	
+
+int colorScheme = GRAYSCALE_COLORMAP;
+int wireframe = DISABLE;
+
+/****************************************************************************************/
+
+/*********Window resize function, sets up viewing parameters (GLUT callback function)***/
+void viewing(int W, int H)											
+{	
+	screenHeight=H;
+	screenWidth=W;
+	glEnable( GL_DEPTH_TEST );
+	
+	glMatrixMode (GL_PROJECTION);									//2. Set the projection matrix
+	glLoadIdentity ();
+	gluPerspective(fov,float(W)/H,z_near,z_far);
+	glScalef(1,0.5,1);
+	
+	glMatrixMode(GL_MODELVIEW);										//1. Set the modelview matrix (including the camera position and view direction)
+	glLoadIdentity ();
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset( .5 , .5 );
+}
+
+void colormap() 
+{
+
+	int sal_index  = 0 ;
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	Quad q;
+
+	float R,G,B;
+
+	if(colorScheme == GRAYSCALE_COLORMAP)
+	{
+		// Visit every grid and add color to the quadrilateral
+		for (int y = 0 ; y < YDim-1 ; y++) 
+		{
+			for (int x = 0 ; x < XDim-1; x++)
+			{
+				sal_index = y*XDim+x ;
+				if (salParamVals[sal_index]== -1) glColor3f(0,0,0);
+				else glColor3f(salParamVals[sal_index],salParamVals[sal_index],salParamVals[sal_index]) ;
+				Point3d p0 (xvalues[x],yvalues[y],salParamVals[sal_index]*maxElevationHeight);						// scale normalised salinity to Z index
+				Point3d n0 = computeNormal(p0,sal_index);
+				q.addNormal(n0.data);																						// Normal for Gouraud Shading
+				q.addPoint(p0.x,p0.y,p0.z);
+
+				sal_index = y*XDim+x+1 ;
+				if (salParamVals[sal_index]== -1) glColor3f(0,0,0);
+				else glColor3f(salParamVals[sal_index],salParamVals[sal_index],salParamVals[sal_index]) ;
+				Point3d p1 (xvalues[x+1],yvalues[y],salParamVals[sal_index]*maxElevationHeight);
+				Point3d n1 = computeNormal(p1,sal_index);
+				q.addNormal(n1.data);	
+				q.addPoint(p1.x,p1.y,p1.z);
+
+				sal_index = (y+1)*XDim+x+1 ;
+				if (salParamVals[sal_index]== -1) glColor3f(0,0,0);
+				else glColor3f(salParamVals[sal_index],salParamVals[sal_index],salParamVals[sal_index]) ;
+				Point3d p2 (xvalues[x+1],yvalues[y+1],salParamVals[sal_index]*maxElevationHeight);
+				Point3d n2 = computeNormal(p2,sal_index);
+				q.addNormal(n2.data);	
+				q.addPoint(p2.x,p2.y,p2.z);
+
+				sal_index = (y+1)*XDim+x ;
+				if (salParamVals[sal_index]== -1) glColor3f(0,0,0);
+				else glColor3f(salParamVals[sal_index],salParamVals[sal_index],salParamVals[sal_index]) ;
+				Point3d p3 (xvalues[x],yvalues[y+1],salParamVals[sal_index]*maxElevationHeight);
+				Point3d n3 = computeNormal(p3,sal_index);
+				q.addNormal(n3.data);	
+				q.addPoint(p3.x,p3.y,p3.z);
+			}
+		}
+	}
+	else{
+		float R,G,B;
+		for (int y = 0 ; y < YDim-1 ; y++) 
+		{
+			for (int x = 0 ; x < XDim-1; x++)
+			{
+				sal_index = y*XDim+x ;
+				if (salParamVals[sal_index]== -1) 
+				{
+					glColor3f(0,0,0);
+					Point3d p0 (xvalues[x],yvalues[y],0);
+					Point3d n0 = computeNormal(p0,sal_index);
+					q.addNormal(n0.data);	
+					q.addPoint(p0.x,p0.y,p0.z);
+				}
+				else 
+				{
+					rainbow(salParamVals[sal_index],R,G,B);
+					glColor3f(R,G,B) ;
+					Point3d p0 (xvalues[x],yvalues[y],salParamVals[sal_index]*maxElevationHeight);
+					Point3d n0 = computeNormal(p0,sal_index);
+					q.addNormal(n0.data);	
+					q.addPoint(p0.x,p0.y,p0.z);
+				}
+
+				sal_index = y*XDim+x+1 ;
+				if (salParamVals[sal_index]== -1) 
+				{
+					glColor3f(0,0,0);
+					Point3d p1 (xvalues[x+1],yvalues[y],0);
+					Point3d n1 = computeNormal(p1,sal_index);
+					q.addNormal(n1.data);	
+					q.addPoint(p1.x,p1.y,p1.z);
+				}
+				else 
+				{
+					rainbow(salParamVals[sal_index],R,G,B);
+					glColor3f(R,G,B) ;
+					Point3d p1 (xvalues[x+1],yvalues[y],salParamVals[sal_index]*maxElevationHeight);
+					Point3d n1 = computeNormal(p1,sal_index);
+					q.addNormal(n1.data);	
+					q.addPoint(p1.x,p1.y,p1.z);
+				}
+
+				sal_index = (y+1)*XDim+x+1 ;
+				if (salParamVals[sal_index]== -1) 
+				{
+					glColor3f(0,0,0);
+					Point3d p2 (xvalues[x+1],yvalues[y+1],0);
+					Point3d n2 = computeNormal(p2,sal_index);
+					q.addNormal(n2.data);	
+					q.addPoint(p2.x,p2.y,p2.z);
+				}
+				else 
+				{
+					rainbow(salParamVals[sal_index],R,G,B);
+					glColor3f(R,G,B) ;
+					Point3d p2 (xvalues[x+1],yvalues[y+1],salParamVals[sal_index]*maxElevationHeight);
+					Point3d n2 = computeNormal(p2,sal_index);
+					q.addNormal(n2.data);	
+					q.addPoint(p2.x,p2.y,p2.z);
+				}
+
+				sal_index = (y+1)*XDim+x ;
+				if (salParamVals[sal_index]== -1) 
+				{
+					glColor3f(0,0,0);
+					Point3d p3 (xvalues[x],yvalues[y+1],0);
+					Point3d n3 = computeNormal(p3,sal_index);
+					q.addNormal(n3.data);	
+					q.addPoint(p3.x,p3.y,p3.z);
+				}
+				else 
+				{
+					rainbow(salParamVals[sal_index],R,G,B);
+					glColor3f(R,G,B) ;
+					Point3d p3 (xvalues[x],yvalues[y+1],salParamVals[sal_index]*maxElevationHeight);
+					Point3d n3 = computeNormal(p3,sal_index);
+					q.addNormal(n3.data);	
+					q.addPoint(p3.x,p3.y,p3.z);
+				}
+			}
+		}
+	}
+	q.draw();
+}
+
+void contours()
+{
+	float maxSalinity = max_element(salinityVals,XDim*YDim,true);
+	float minSalinity = min_element(salinityVals,XDim*YDim,true);
+	
+	glLineWidth(2.0);
+	int r = 255;
+	int g = 0;
+	int b = 0;
+	for(int i=1;i<=Number_of_Contours;i++)
+	{
+		//Select color for that salinity value
+		if(i%3==0)
+			r = (r+51)%256;
+		else if(i%3==1)
+			g = (g+102)%256;
+		else
+			b = (b+153)%256;
+		
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glColor3f((float)r/255.0,(float)g/255.0,(float)b/255.0);
+		float salinitySample = minSalinity + i*(maxSalinity-minSalinity)/Number_of_Contours;
+		
+		// Contour mapping using marching squares
+		
+		//Go through every grid point and assign binary value to it
+		int bin[XDim][YDim];
+		int sal_index = 0 ;
+		for (int y=0; y<YDim; y++) 
+		{
+			for (int x=0; x<XDim; x++) 
+			{
+				bin[x][y] = (salinityVals[sal_index++] <= salinitySample) ? 0 : 1;
+			}
+		}
+		
+		//Go through every grid
+		int square[4][2];
+		float square_length = xvalues[1]-xvalues[0];
+		int sal_index1,sal_index2,sal_index3,sal_index4;
+		for (int y = 0 ; y < YDim-1 ; y++) 
+		{
+			for (int x = 0 ; x < XDim-1; x++) 
+			{
+				square[0][0] = bin[x][y];
+				square[0][1] = bin[x][y+1];
+				square[1][0] = bin[x+1][y];
+				square[1][1] = bin[x+1][y+1];
+				
+				sal_index1 = y*XDim+x ;
+				sal_index2 = y*XDim+x+1 ;
+				sal_index3 = (y+1)*XDim+x+1 ;
+				sal_index4 = (y+1)*XDim+x ;
+				
+				// If edge has two colored vertex, interpolate and find right coordinates,draw line(s)
+				// 16 possible cases
+				
+				// Predefine 4 coordinates on the edges of the grid
+				Point3d p1(xvalues[x]+ square_length*abs((salinitySample - salinityVals[sal_index1])/(salinityVals[sal_index2]-salinityVals[sal_index1])),yvalues[y],(salinitySample-minSalinity)/(maxSalinity-minSalinity)*maxElevationHeight);
+				Point3d p2(xvalues[x+1],yvalues[y] + square_length*abs((salinityVals[sal_index2] - salinitySample)/(salinityVals[sal_index2]-salinityVals[sal_index3])),(salinitySample-minSalinity)/(maxSalinity-minSalinity)*maxElevationHeight);
+				Point3d p3(xvalues[x+1]-square_length*abs((salinitySample - salinityVals[sal_index3])/(salinityVals[sal_index3]-salinityVals[sal_index4])),yvalues[y+1],(salinitySample-minSalinity)/(maxSalinity-minSalinity)*maxElevationHeight);
+				Point3d p4(xvalues[x],square_length*yvalues[y+1] - abs((salinityVals[sal_index4] - salinitySample)/(salinityVals[sal_index4]-salinityVals[sal_index1])),(salinitySample-minSalinity)/(maxSalinity-minSalinity)*maxElevationHeight);
+				
+				
+				if(square[0][0] == 0 && square[0][1] == 0 && square[1][0] == 0 && square[1][1] == 0)
+				{
+				}
+				
+				else if(square[0][0] == 0 && square[0][1] == 0 && square[1][0] == 1 && square[1][1] == 0)
+				{
+					Line l;
+					l.addPoint(p1);
+					l.addPoint(p2);
+					l.draw();
+				}
+				
+				else if(square[0][0] == 0 && square[0][1] == 0 && square[1][0] == 0 && square[1][1] == 1)
+				{
+					Line l;
+					l.addPoint(p2);
+					l.addPoint(p3);
+					l.draw();
+				}
+				
+				else if(square[0][0] == 0 && square[0][1] == 0 && square[1][0] == 1 && square[1][1] == 1)
+				{
+					Line l;
+					l.addPoint(p1);
+					l.addPoint(p3);
+					l.draw();
+				}
+				
+				else if(square[0][0] == 0 && square[0][1] == 1 && square[1][0] == 0 && square[1][1] == 0)
+				{
+					Line l;
+					l.addPoint(p3);
+					l.addPoint(p4);
+					l.draw();
+				}
+				
+				else if(square[0][0] == 0 && square[0][1] == 1 && square[1][0] == 1 && square[1][1] == 0)
+				{
+					Line l1;
+					l1.addPoint(p1);
+					l1.addPoint(p4);
+					l1.draw();
+					Line l2;
+					l2.addPoint(p2);
+					l2.addPoint(p3);
+					l2.draw();
+				}
+				
+				else if(square[0][0] == 0 && square[0][1] == 1 && square[1][0] == 0 && square[1][1] == 1)
+				{
+					Line l;
+					l.addPoint(p2);
+					l.addPoint(p4);
+					l.draw();
+				}
+				
+				else if(square[0][0] == 0 && square[0][1] == 1 && square[1][0] == 1 && square[1][1] == 1)
+				{
+					Line l;
+					l.addPoint(p1);
+					l.addPoint(p4);
+					l.draw();
+				}
+				
+				else if(square[0][0] == 1 && square[0][1] == 0 && square[1][0] == 0 && square[1][1] == 0)
+				{
+					Line l;
+					l.addPoint(p1);
+					l.addPoint(p4);
+					l.draw();
+				}
+				
+				else if(square[0][0] == 1 && square[0][1] == 0 && square[1][0] == 1 && square[1][1] == 0)
+				{
+					Line l;
+					l.addPoint(p2);
+					l.addPoint(p4);
+					l.draw();
+				}
+				
+				else if(square[0][0] == 1 && square[0][1] == 0 && square[1][0] == 0 && square[1][1] == 1)
+				{
+					Line l1;
+					l1.addPoint(p1);
+					l1.addPoint(p2);
+					l1.draw();
+					Line l2;
+					l2.addPoint(p3);
+					l2.addPoint(p4);
+					l2.draw();
+				}
+				
+				else if(square[0][0] == 1 && square[0][1] == 0 && square[1][0] == 1 && square[1][1] == 1)
+				{
+					Line l;
+					l.addPoint(p3);
+					l.addPoint(p4);
+					l.draw();
+				}
+				
+				else if(square[0][0] == 1 && square[0][1] == 1 && square[1][0] == 0 && square[1][1] == 0)
+				{
+					Line l;
+					l.addPoint(p1);
+					l.addPoint(p3);
+					l.draw();
+				}
+				
+				else if(square[0][0] == 1 && square[0][1] == 1 && square[1][0] == 1 && square[1][1] == 0)
+				{
+					Line l;
+					l.addPoint(p2);
+					l.addPoint(p3);
+					l.draw();
+				}
+				
+				else if(square[0][0] == 1 && square[0][1] == 1 && square[1][0] == 0 && square[1][1] == 1)
+				{
+					Line l;
+					l.addPoint(p1);
+					l.addPoint(p2);
+					l.draw();
+				}
+				
+				else
+				{
+				}
+			}
+		}
+	}
+	glLineWidth(1.0);
+}
+
+void elevationMap()
+{
+	maxElevationHeight = (maxElevationHeight+20)%40;
+	
+	// Add light if elevation map is enabled
+	if(maxElevationHeight==20)
+	{
+		glShadeModel(GL_SMOOTH);							//2. Set shading parameters: use flat shading
+		float light[4] = {1,1,1,0};							//3. Enable and set one directional light
+		glEnable(GL_LIGHTING);
+		glEnable(GL_LIGHT0);
+		glLightfv(GL_LIGHT0,GL_POSITION,light);
+		glEnable(GL_COLOR_MATERIAL);						//4. Tell OpenGL to use the values passed by glColor() as material properties
+	}
+	else
+	{
+		glDisable(GL_LIGHTING);
+		glDisable(GL_LIGHT0);
+	}
+	wireframe = ++wireframe%2;
+	float x = (max_element(xvalues,XDim,false) + min_element(xvalues,XDim,false))/2.0;
+	float y = (max_element(yvalues,YDim,false) + min_element(yvalues,YDim,false))/2.0;
+	Camera.init(0,0,-1,1,0,0,0,1,0,x,y,30,0,360,5);
+}
+
+void legend()
+{
+	// Add contour legend
+	int r = 255;
+	int g = 0;
+	int b = 0;
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	int j = xvalues[0];
+	float maxSalinity = max_element(salinityVals,XDim*YDim,true);
+	float minSalinity = min_element(salinityVals,XDim*YDim,true);
+	char type[8] = "contour";
+	glRasterPos3i( j+5, 15, 0); // location to start printing text
+	for( int ch=0; ch < 8; ch++)
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, type[ch] ); // Print a character on the screen
+	for(int i=1;i<=Number_of_Contours;i++)
+	{
+		//Select color for that salinity value
+		if(i%3==0)
+			r = (r+51)%256;
+		else if(i%3==1)
+			g = (g+102)%256;
+		else
+			b = (b+153)%256;
+			
+		glColor3f((float)r/255.0,(float)g/255.0,(float)b/255.0);
+		float salinitySample = minSalinity + i*(maxSalinity-minSalinity)/Number_of_Contours;
+		Quad q;
+		q.addPoint(j,0,0);
+		q.addPoint(j+10,0,0);
+		q.addPoint(j+10,10,0);
+		q.addPoint(j,10,0);
+		q.draw();
+		char conVal[4];
+		sprintf(conVal, "%.2f", salinitySample);
+		glRasterPos3i( j+5, -15, 0); // location to start printing text
+		for( int digit=0; digit < 4; digit++)
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, conVal[digit] ); // Print a character on the screen
+		j+=10;
+	}
+	j+=10;
+	
+	// Add color map legend
+	if(colorScheme==GRAYSCALE_COLORMAP)
+	{
+		float R,G,B;
+		char type[10] = "color map";
+		glRasterPos3i( j+5, 15, 0); // location to start printing text
+		for( int ch=0; ch < 10; ch++)
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, type[ch] ); // Print a character on the screen
+		for(int i=1;i<=10;i+=2)
+		{
+			grayscale(i*0.1,R,G,B);
+			glColor3f(R,G,B);
+			float originalSal = minSalinity + i*(maxSalinity-minSalinity)*0.1;
+			Quad q;
+			q.addPoint(j,0,0);
+			q.addPoint(j+10,0,0);
+			q.addPoint(j+10,10,0);
+			q.addPoint(j,10,0);
+			q.draw();
+			char val[4];
+			sprintf(val, "%.2f", originalSal);
+			glRasterPos3i( j+5, -15, 0); // location to start printing text
+			for( int digit=0; digit < 4; digit++)
+				glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, val[digit] ); // Print a character on the screen
+			j+=10;
+		}
+	}
+	else
+	{
+		float R,G,B;
+		char type[10] = "color map";
+		glRasterPos3i( j+5, 15, 0); // location to start printing text
+		for( int ch=0; ch < 10; ch++)
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, type[ch] ); // Print a character on the screen
+		for(int i=1;i<=10;i+=2)
+		{
+			rainbow(i*0.1,R,G,B);
+			glColor3f(R,G,B);
+			float originalSal = minSalinity + i*(maxSalinity-minSalinity)*0.1;
+			Quad q;
+			q.addPoint(j,0,0);
+			q.addPoint(j+10,0,0);
+			q.addPoint(j+10,10,0);
+			q.addPoint(j,10,0);
+			q.draw();
+			char val[4];
+			sprintf(val, "%.2f", originalSal);
+			glRasterPos3i( j+5, -15, 0); // location to start printing text
+			for( int digit=0; digit < 4; digit++)
+				glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, val[digit] ); // Print a character on the screen
+			j+=10;
+		}
+	}
+}
+
+void drawWireframe()
+{
+	int sal_index  = 0 ;
+	Quad q;
+	if(wireframe==ENABLE)
+	{
+		glEnable(GL_POLYGON_OFFSET_LINE);
+		glPolygonOffset(-.5,-.5);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		for (int y = 0 ; y < YDim-1 ; y++)
+		{
+			for (int x = 0 ; x < XDim-1; x++) 
+			{
+				sal_index = y*XDim+x ;
+				glColor3f(0,0,0);
+				Point3d p0 (xvalues[x],yvalues[y],salParamVals[sal_index]*maxElevationHeight);
+				Point3d n0 = computeNormal(p0,sal_index);
+				q.addNormal(n0.data);	
+				q.addPoint(p0.x,p0.y,p0.z);
+				
+				sal_index = y*XDim+x+1 ;
+				glColor3f(0,0,0);
+				Point3d p1 (xvalues[x+1],yvalues[y],salParamVals[sal_index]*maxElevationHeight);
+				Point3d n1 = computeNormal(p1,sal_index);
+				q.addNormal(n1.data);	
+				q.addPoint(p1.x,p1.y,p1.z);
+				
+				sal_index = (y+1)*XDim+x+1 ;
+				glColor3f(0,0,0);
+				Point3d p2 (xvalues[x+1],yvalues[y+1],salParamVals[sal_index]*maxElevationHeight);
+				Point3d n2 = computeNormal(p2,sal_index);
+				q.addNormal(n2.data);	
+				q.addPoint(p2.x,p2.y,p2.z);
+				
+				sal_index = (y+1)*XDim+x ;
+				glColor3f(0,0,0);
+				Point3d p3 (xvalues[x],yvalues[y+1],salParamVals[sal_index]*maxElevationHeight);
+				Point3d n3 = computeNormal(p3,sal_index);
+				q.addNormal(n3.data);	
+				q.addPoint(p3.x,p3.y,p3.z);
+			}
+		}
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glDisable(GL_POLYGON_OFFSET_LINE);
+	}
+	q.draw();
+}
+
+void draw()
+{
+	glViewport(0,100,screenWidth,screenHeight-100);
+	glClearColor(1,1,1,1);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT) ;
+	
+	glMatrixMode(GL_MODELVIEW);							//1. Set the modelview matrix (including the camera position and view direction)
+	glLoadIdentity ();
+	glScalef(scale_x,scale_y,scale_z);
+	Camera.Render();
+	
+	// Main program calls (elevationMap() called when key pressed)
+	colormap() ;
+	contours() ;
+	drawWireframe();
+	
+	// Separte viewport for legend
+	glViewport(0,0,screenWidth,100);
+	legend();
+	
+	glFlush();  
+	glutSwapBuffers() ;
+}
+
+/***********Keyboard Interrupt*****************/
+
+void KeyDown(unsigned char key, int x, int y)
+{
+	switch (key) 
+	{
+	case 27:		//ESC
+		exit(0);
+		break;
+	case 'a':		
+		Camera.RotateY(5.0);
+		glutPostRedisplay();
+		break;
+	case 'd':		
+		Camera.RotateY(-5.0);
+		glutPostRedisplay();
+		break;
+	case 'w':		
+		Camera.RotateX(5.0);
+		glutPostRedisplay();
+		break;
+	case 's':		
+		Camera.RotateX(-5.0);
+		glutPostRedisplay();
+		break;
+	case 'E':
+		elevationMap();
+		glutPostRedisplay();
+		break;
+	case 'T':
+		timestep = (++timestep)%totalTimesteps;
+		salinityVals = dh.salinity[timestep];
+		glutPostRedisplay();
+		break;
+	case 'C':
+		colorScheme = (++colorScheme)%2;
+		glutPostRedisplay();
+		break;
+	case 'W':
+		wireframe = ++wireframe%2;
+		glutPostRedisplay();
+		break;
+	}
+	Camera.Print();
+}
+
+void specialKeys( int key, int x, int y ) 
+{
+	switch (key) 
+	{
+	case GLUT_KEY_RIGHT:
+		Camera.StrafeRight(0.1);
+		glutPostRedisplay();
+		break;
+	case GLUT_KEY_LEFT:
+		Camera.StrafeRight(-0.1);
+		glutPostRedisplay();
+		break;
+	case GLUT_KEY_UP:
+		Camera.MoveUpward(0.3);
+		glutPostRedisplay();
+		break;
+	case GLUT_KEY_DOWN:
+		Camera.MoveUpward(-0.3);
+		glutPostRedisplay();
+		break;
+	}
+	glutPostRedisplay();
+}
+/************************Mouse Interrupts******************************/
+void mouseFunc(int button, int state, int x, int y)
+{
+	switch (button) 
+	{
+	case 2:
+		if(state == GLUT_DOWN)
+			mouseButtonPressed[0] = true;
+		else
+			mouseButtonPressed[0] = false;
+		break;
+	case 0:
+		if(state == GLUT_DOWN)
+			mouseButtonPressed[2] = true;
+		else
+			mouseButtonPressed[2] = false;
+		break;
+	case 3:	
+		Camera.MoveForward( -0.1 ) ;
+		glutPostRedisplay();
+		break;
+	case 4:
+		Camera.MoveForward( 0.1 ) ;
+		glutPostRedisplay();
+		break;
+	}
+}
+
+void mouseDrag(int x, int y)
+{
+	if(mouseButtonPressed[0])
+	{
+		Camera.RotateZ(-.2);
+		glutPostRedisplay();
+	}
+	if(mouseButtonPressed[2])
+	{
+		Camera.RotateZ(.2);
+		glutPostRedisplay();
+	}
+}
+/***********************************************************************/
+    
+int main(int argc,char* argv[])											//Main program
+{
+	 if(argc<2)
+	 {
+		 cout << "USAGE: ./assignment1 [data file path]" <<endl;
+		 exit(-1);
+	 }
+   glutInit(&argc, argv);														//1. Initialize the GLUT toolkit
+   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);			//2. Ask GLUT to create next windows with a RGB framebuffer and a Z-buffer too
+   glutInitWindowSize(screenWidth,screenHeight);		//3. Tell GLUT how large are the windows we want to create next
+   glutCreateWindow("Assignment 1");								//4. Create our window
+   
+   // Read .csv and init camera
+   collectData(argv[1]);
+   float x = (max_element(xvalues,XDim,false) + min_element(xvalues,XDim,false))/2.0;
+   float y = (max_element(yvalues,YDim,false) + min_element(yvalues,YDim,false))/2.0;
+   Camera.init(0,0,-1,1,0,0,-.1,1,0,x,y,20,0,360,5);
+   
+   // Input Handling
+   for(int i=0;i<5;i++)
+			mouseButtonPressed[i]=false;
+	
+   glutKeyboardFunc(KeyDown); 						// Tell GLUT to use the method "keyPressed" for key presses  
+   glutSpecialFunc(specialKeys);
+   glutMouseFunc(mouseFunc);
+   glutMotionFunc(mouseDrag);
+   
+   glutDisplayFunc(draw);									//5. Add a drawing callback to the window	
+   glutReshapeFunc(viewing);							//6. Add a resize callback to the window
+   glutMainLoop();												//7. Start the event loop that displays the graph and handles window-resize events
+   
+   return 0;
+}
+
+
+/* Aux functions */
+
+float max_element(vector<float> arr,int size, bool ignore)
+{
+	float temp = -1000000.0;
+	for(int i=0;i<size;i++)
+	{
+		if(ignore)
+		{
+			if(temp<arr[i] && arr[i]!=0)
+				temp = arr[i];
+		}
+		else
+		{
+			if(temp<arr[i])
+				temp = arr[i];
+		}
+	}
+	return temp;
+}
+
+float min_element(vector<float> arr,int size, bool ignore)
+{
+	float temp = 10000.0;
+	for(int i=0;i<size;i++)
+	{
+		if(ignore)
+		{
+			if(temp>arr[i] && arr[i]!=0)
+				temp = arr[i];
+		}
+		else{
+			if(temp>arr[i])
+				temp = arr[i];
+		}
+	}
+	return temp;
+}
+
+void collectData(string fname)
+{
+	 dh.filename = fname;
+	 dh.parseData();
+	 XDim = dh.XAxis;
+	 YDim = dh.YAxis;
+	 xvalues = dh.xvalues;
+	 yvalues = dh.yvalues;
+	 salinityVals = dh.salinity[timestep];
+	
+	//Normalize salinity values
+	
+	int sal_index = 0 ;
+	for (int y=0; y<YDim; y++) 
+	{
+		for (int x=0; x<XDim; x++) {
+			float sal_param = salinityVals[sal_index++] ;
+			if(sal_param == 0)
+				salParamVals.push_back(-1);
+			else
+				salParamVals.push_back((sal_param-31)/6.0);
+		}
+	}
+	
+	 totalTimesteps = dh.Timesteps;
+}
+
+Point3d computeNormal(const Point3d& p,int salIndex)					//Given a point p on the function's domain, computes the normal 
+{																															//of the graph of the function at p
+	Point3d pr(p.x+1,p.y,salParamVals[salIndex+1]);						//For this, we compute four normals of the triangles formed by p and neighbor
+	Point3d pl(p.x-1,p.y,salParamVals[salIndex-1]);						//grid points (pr,pl,pu,pd), and next average them.
+	Point3d pu(p.x,p.y+1,salParamVals[salIndex+XDim]);
+	Point3d pd(p.x,p.y-1,salParamVals[salIndex-XDim]);
+
+	Point3d n1 = (pr-p).cross(pu-p); n1.normalize();						//Compute the four normals of the above triangles
+	Point3d n2 = (pu-p).cross(pl-p); n2.normalize();
+	Point3d n3 = (pl-p).cross(pd-p); n3.normalize();
+	Point3d n4 = (pd-p).cross(pr-p); n4.normalize();
+	
+	Point3d n = n1+n2+n3+n4;							//Compute the average normal
+	n.normalize();										//Normalize the result, since it should be unit length
+
+	return n;
+}
+
+void rainbow(float value,float& R,float& G,float& B)	//Maps a scalar in [0,1] to a color using the rainbow colormap
+{
+   const float dx=0.8f;
+
+   value = (6-2*dx)*value+dx;
+   R = max(0.0f,(3-(float)fabs(value-4)-(float)fabs(value-5))/2);
+   G = max(0.0f,(4-(float)fabs(value-2)-(float)fabs(value-4))/2);
+   B = max(0.0f,(3-(float)fabs(value-1)-(float)fabs(value-2))/2);
+}
+
+void grayscale(float value,float& R,float& G,float& B)	//Maps a scalar in [0,1] to a color using a grayscale colormap
+{
+   R = G = B = value;
+}

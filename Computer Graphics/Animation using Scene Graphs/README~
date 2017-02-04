@@ -1,0 +1,53 @@
+Installation:
+	1) Install all the required libraries (QT and opengl).
+	2) Move to src directory (>>cd [path-to-src])
+	3) Compile (>>make all)
+	4) Run (>>./Assignment4 trashcan.ply cube2.ply street_lamp.ply)
+
+Scene Description:
+	1) A robot is moving in a park like environment.
+	2) There is drone fly independently of the robot in the park.
+	3) When robot calls (user presses button) it, the drone comes and sit on the robot.
+	4) Scene Graph: Root -> (robot body, drone) ; Robot body -> (Head, 2 x arms, 2 x legs)
+
+User Interaction options:
+
+	ZOOM-IN/OUT  					----- GUI Slider
+	ROTATE   							----- Mouse Left key + drag
+	Translate							----- GUI Slider
+	Toggle Lights 				----- GUI checkbox
+	Toggle Bounding Box	 	----- GUI checkbox
+	Toggle Texture 				----- GUI checkbox
+	Change Texture 				----- GUI push button
+	Robot/Drone Speed			----- GUI Sliders
+	Toggle Camera					----- GUI Push button
+	Attach flying object	----- GUI checkbox
+	Exit          				----- esc
+	
+
+Program Features:
+
+	1) Program implements a scene graph from the scratch and thoroughly follows it properties.
+	2) Entire program is built using MVC architecture.
+	3) A graphical user interface is provided for easy user interaction using QT.
+	4) The program can handle any given .ply files and textures once files are named accordingly.
+
+References:
+
+	Angel, E.; Shreiner, D. (2012). Ch. 2,3 Interactive Computer Graphics -
+	A Top-Down Approach 6th ed. Pearson.
+	
+	OpenGL Windows GUI Application. (n.d.). Retrieved January 23, 2016,
+	from http://www.songho.ca/opengl/gl_mvc.html
+	
+	Lesson 10: Loading Stanford PLY 3D Models. (n.d.). Retrieved February 20, 2016,
+	from https://tutorialsplay.com/opengl/2014/09/17/lesson-10-loading-stanford-ply-3d-models/
+	
+	Open GL Super Bible. (n.d.). Retrieved April 08, 2016, 
+	from http://opengl.czweb.org/ch09/293-296.html
+	
+	Tutorial 5 : A Textured Cube. (n.d.). Retrieved April 08, 2016,
+	from http://www.opengl-tutorial.org/beginners-tutorials/tutorial-5-a-textured-cube/
+	
+	Qt 5 Tutorial. (n.d.). Retrieved April 08, 2016,
+	from http://www.bogotobogo.com/Qt/Qt5_OpenGL_QGLWidget.php

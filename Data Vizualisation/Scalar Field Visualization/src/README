@@ -1,0 +1,39 @@
+Installation:
+	1) Move to src directory (>>cd [path-to-src])
+	2) Compile (>>make all)
+	3) Run (>>./assignment1 [path-to-csv-file])
+		eg- ./assignment1 ../bin/sea_surface_salinity_3_timestep.csv 
+
+User Interaction options:
+
+	ZOOM-IN  			----- Mouse wheel scroll-up
+	ZOOM-OUT 			----- Mouse wheel scroll-down
+	ROTATE Z+	 		----- Mouse left click and drag
+	ROTATE Z-			----- Mouse right click and drag
+	Translate up/down	----- Up/Down-arrow key
+	Translate left/right----- Left/Right-arrow key
+	ROTATE Y+			----- w
+	ROTATE Y-			----- s
+	ROTATE X+			----- a	
+	ROTATE X-			----- d
+	Exit              	----- esc
+	
+
+Special Functions (All Capital characters)
+
+	Toggle elevation	------ E
+	Toggle Timestep 	------ T  
+	Toggle Color Scheme	------ C
+	Toggle WireFrame	------ W
+
+Program Features:
+
+	1) Implemented Gouraud shading for elevation map.
+	2) Added an option for wireframe for better viewing.
+	3) Added an option to toggle in between all the timesteps in the input .csv.
+	4) A legend for contour and color map was provided in a separate viewport for better understanding of data.
+	5) Cleaning of data for the provided .csv is automatic. No need to do it manually.
+	
+Program drawbacks:
+	
+	1) OpenGL perpective mode was used to provide a open world kind of view making the elevation map a little hard to read.

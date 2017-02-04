@@ -1,0 +1,33 @@
+Installation:
+	1) Move to src directory (>>cd [path-to-src])
+	2) Compile (>>make all)
+	3) Run (>>./assignment3 [path-to-csv-file])
+		eg- ./assignment1 ../bin/sea_surface_salinity_3_timestep.csv 
+
+User Interaction options:
+
+	ZOOM-IN  			----- Mouse wheel scroll-up
+	ZOOM-OUT 			----- Mouse wheel scroll-down
+	ROTATE Z+	 		----- Mouse left click and drag
+	ROTATE Z-			----- Mouse right click and drag
+	Translate up/down	----- Up/Down-arrow key
+	Translate left/right----- Left/Right-arrow key
+	ROTATE Y+			----- w
+	ROTATE Y-			----- s
+	ROTATE X+			----- a	
+	ROTATE X-			----- d
+	
+
+Special Functions (All Capital characters)
+
+	Toggle lighting	------ l
+	Toggle slice orientation 	------ home  
+	Toggle move slice	------ Page up/ Page dn
+
+Program Features:
+
+	1) Implemented Gouraud shading for isosurfaces.
+	2) Added a wireframe for better viewing.
+	3) Used a separate viewport for rendering sliced plane colormap for better viewing.
+	4) A legend for isovalues and color map was provided in a separate viewport for better understanding of data.
+	5) Cleaning of data for the provided .csv is automatic. No need to do it manually.	

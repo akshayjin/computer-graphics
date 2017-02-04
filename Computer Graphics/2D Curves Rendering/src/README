@@ -1,0 +1,38 @@
+Installation:
+	1) Move to src directory (>>cd [path-to-src])
+	2) Compile (>>make all)
+	3) Run (>>./assignment1)
+
+User Interaction options:
+
+	ZOOM-IN  			----- +
+	ZOOM-OUT 			----- -
+	ROTATE Z+	 		----- l
+	ROTATE Z-			----- r
+	Translate			----- Mouse Left key + drag
+	Add Point			----- Mouse left click
+	Delete Point	----- Mouse middle click on point to be deleted
+	Exit          ----- esc
+	
+
+Program Features:
+
+	1) Entire program is built using MVC architecture.
+
+References:
+
+	Angel, E.; Shreiner, D. (2012). Ch. 2,3 Interactive Computer Graphics -
+	A Top-Down Approach 6th ed. Pearson.
+	
+	OpenGL Windows GUI Application. (n.d.). Retrieved January 23, 2016,
+	from http://www.songho.ca/opengl/gl_mvc.html
+	
+	Bézier Curve. (n.d.). Retrieved January 23, 2016, from
+	http://mathworld.wolfram.com/BezierCurve.html
+	
+	Bézier Curve. (n.d.). Retrieved January 23, 2016, from
+	https://en.wikipedia.org/wiki/Bézier_curve
+	
+	Lagrange Interpolating Polynomial. (n.d.). Retrieved January 23, 2016,
+	from
+	http://mathworld.wolfram.com/LagrangeInterpolatingPolynomial.html	

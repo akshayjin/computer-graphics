@@ -1,0 +1,12 @@
+#pragma once
+
+#include <vector>
+
+class DataHandler{
+	
+	vector <float> xvalues;				//Grid coordinates
+	vector <float> yvalues;
+	vector <vector<float>> salinity;	//Vector of salinity values indexed by timestamp
+	
+	void parseData(FILE* fp);
+}

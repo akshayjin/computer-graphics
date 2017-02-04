@@ -1,0 +1,39 @@
+Parallel Coordinates
+
+Installation:
+	3) Run (>>./[path-to-processing.sh] [path-to-parallel_coordinates.pde])
+			Select run option in the editor.
+		eg- ./processing ../sketchbook/assignment5/parallel_coordinates/parallel_coordinates.pde
+
+User Interaction options:
+
+	Move Axis             ----- click on the axis name to select it. Click again and drag the selected axis to reorder
+	
+
+Program Features:
+
+	1) Parallel coordinates axis are dynamic and can be reordered using mouse.
+	2) Code is highly modular.
+
+	
+Tree Map
+
+Installation:
+	3) Run (>>./[path-to-processing.sh] [path-to-tree_map.pde])
+			Select run option in the editor.
+		eg- ./processing ../sketchbook/assignment5/tree_map/tree_map.pde
+
+User Interaction options:
+
+	ZOOM IN              	----- click on the right half of the screen
+	ZOOM OUT							----- cllick on the left half of the screen
+	
+
+Program Features:
+
+	1) Name the final selector column to "class" in the data file and the code will run on any .csv
+	2) No library was used while writing the code. Code involves a simple slice-and-dice algorithm done recursively.
+	
+Program drawbacks:
+	
+	1) Translation feature is not yet provided.

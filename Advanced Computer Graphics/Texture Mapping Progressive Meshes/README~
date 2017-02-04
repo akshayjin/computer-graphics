@@ -1,0 +1,46 @@
+Installation:
+	1) Install all the required libraries (SOIL and opengl).
+	2) Move to src directory (>>cd [path-to-src])
+	3) Compile (>>make all)
+	4) Run (>>./tmpm)
+
+Scene Description:
+	1) A robot is moving in a park like environment.
+	2) There is drone fly independently of the robot in the park.
+	3) When robot calls (user presses button) it, the drone comes and sit on the robot.
+	4) Scene Graph: Root -> (robot body, drone) ; Robot body -> (Head, 2 x arms, 2 x legs)
+
+User Interaction options:
+
+	ZOOM-IN/OUT  					----- >/<
+	ROTATE   							----- Mouse Right key + drag
+	Toggle Wireframe 			----- w
+	Reduce Polygons 			----- s
+	Increase Polygons 		----- a
+	Exit          				----- esc
+	
+
+Program Features:
+
+	1) Program implements a texture mapped progressive mesh from scratch 
+	2) Entire program is built using MVC architecture.
+	3) A graphical user interface is provided for easy user interaction using QT.
+	4) The program can handle any given .ply files and textures once files are named accordingly.
+
+References:
+
+	Angel, E.; Shreiner, D. (2012). Ch. 2,3 Interactive Computer Graphics -
+	A Top-Down Approach 6th ed. Pearson.
+	
+	Sander, Pedro V., et al. "Texture mapping progressive meshes." Proceedings 
+	of the 28th annual conference on Computer graphics and interactive techniques. ACM, 2001.
+	
+	Garland, Michael, Andrew Willmott, and Paul S. Heckbert. "Hierarchical face 
+	clustering on polygonal surfaces." Proceedings of the 2001 symposium on Interactive 
+	3D graphics. ACM, 2001.
+	
+	Hoppe, Hugues. "Progressive meshes." Proceedings of the 23rd annual conference on 
+	Computer graphics and interactive techniques. ACM, 1996.
+	
+	Melax, Stan. "A Simple, Fast, and Effective Polygon Reduction Algorithm." Game 
+	Developer November 1998.

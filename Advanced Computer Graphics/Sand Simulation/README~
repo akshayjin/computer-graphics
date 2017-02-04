@@ -1,0 +1,35 @@
+Installation:
+	1) Install all the required libraries (pngwriter, glm and opengl).
+	2) Move to src directory (>>cd [path-to-src])
+	3) Compile (>>make all)
+	4) Run (>>./sand)
+
+Scene Description:
+	1) Falling sand in a collapsed sand box fashion soon joined by a ball colliding with it.
+
+User Interaction options:
+
+	ZOOM-IN/OUT  					----- >/<
+	ROTATE   							----- Mouse Right key + drag
+	Toggle Wireframe 			----- w
+	Reduce Polygons 			----- s
+	Increase Polygons 		----- a
+	Exit          				----- esc
+
+
+Program Features:
+
+	1) Complete implementation of [2]
+	2) Randomized color sceheme to give a sand texture.
+	3) Entire program is built using MVC architecture.
+	4) User can play around with constants to achieve different results.
+	5) An offline mode is provided to account for low frame rates.
+
+References:
+
+	[1] Angel, E.; Shreiner, D. (2012). Ch. 2,3 Interactive Computer Graphics -
+	A Top-Down Approach 6th ed. Pearson.
+	
+	[2] Bell, Nathan, Yizhou Yu, and Peter J. Mucha. "Particle-based simulation
+	of granular materials." Proceedings of the 2005 ACM SIGGRAPH/Eurographics
+	symposium on Computer animation. ACM, 2005.

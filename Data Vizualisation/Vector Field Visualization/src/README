@@ -1,0 +1,24 @@
+Installation:
+	1) Move to src directory (>>cd [path-to-src])
+	2) Compile (>>make all)
+	3) Run (>>./assignment2 [path-to-csv-file])
+		eg- ./assignment1 ../bin/seasurface_geoscurrent.csv 
+	
+
+Special Functions (All Capital characters)
+
+	Toggle vector visualization(glyph/streamline)	------ g
+	Toggle glyph scaling mode  										------ m 
+	Toggle streamline drawing style								------ ' ' (spacebar)
+	Increase/Decrease Streamline thickness				------ t/T
+	Increase/Decrease Streamline length						------ +/-
+	Randomize seed points 												------ j
+
+Program Features:
+
+	1) Implemented both Euler and Runge-Kutta 4th order for streamline.
+	2) Implemented different types of streamlines (colormapped polyline and polyline with transparency linearly decreasing along the streamline for arrow like effect).
+	
+Program drawbacks:
+	
+	1) Indian subcontinent is not clearly visible in streamline graph.

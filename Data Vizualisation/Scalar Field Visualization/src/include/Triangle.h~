@@ -1,0 +1,26 @@
+#pragma once
+
+
+
+class Tri										//A simple class for passing a Tri polygon to OpenGL
+{
+public:
+		
+		Tri()									//Constructor: Starts drawing the Tri
+		{  glBegin(GL_TRIANLGES); }
+	   ~Tri()
+	    {}
+		
+void	addPoint(float x, float y, float z)		//Adds a new vertex to the Tri
+		{  glVertex3f(x,y,z); }
+
+void	addNormal(float* n)						//Adds a new normal to the Tri
+		{  glNormal3f(n[0],n[1],n[2]); }
+			
+void    draw()									//Drawing function: ends the Tri definition. This also draws the Tri.
+		{ glEnd(); }						  
+};			 	
+
+
+
+
